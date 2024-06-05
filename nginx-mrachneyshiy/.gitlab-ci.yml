@@ -1,0 +1,53 @@
+image: docker:latest
+services:
+  - docker:dind
+
+stages:
+  - build
+  - test
+  - deploy
+variables:
+  KUBECONFIG: /etc/deploy/config
+  GIT_TAG: latest
+
+.build_templ:
+  stage: build
+  before_script:
+    - docker login ${DOCKER_REGISTRY} -u "${CI_REGISTRY_USER}" -p "${CI_REGISTRY_PASSWORD}"
+  script:
+    - docker build -t ${CONTAINER_IMAGE}:${GIT_TAG} ./data
+    - docker push ${CONTAINER_IMAGE}:${GIT_TAG}
+
+build_main:
+  extends: .build_templ
+  rules:
+    - if: ('$CI_COMMIT_BRANCH == "main"' && $CI_COMMIT_TAG == null)
+
+build_tag:
+  extends: .build_templ
+  variables:
+    GIT_TAG: ${CI_COMMIT_TAG}
+  rules:
+    - if: ('$CI_COMMIT_BRANCH == "main"' && $CI_COMMIT_TAG)
+
+test:
+  stage: test
+  script:
+    - docker pull ${CONTAINER_IMAGE}:${GIT_TAG}
+  rules:
+    - if: ('$CI_COMMIT_BRANCH == "main"')
+
+deploy:
+  stage: deploy
+  image: dtzar/helm-kubectl
+  script:
+    - mkdir -p /etc/deploy
+    - echo ${KUBE_CONFIG} | base64 -d > ${KUBECONFIG}
+    - kubectl config use-context kubernetes-admin@cluster.local
+    - sed -i "s/__tag__/${CI_COMMIT_TAG}/g" ./data/deploy.yaml
+    - kubectl apply -f ./data
+  rules:
+    - if: ('$CI_COMMIT_BRANCH == "main"' && $CI_COMMIT_TAG)
+
+
+

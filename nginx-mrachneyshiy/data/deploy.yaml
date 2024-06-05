@@ -1,0 +1,41 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nginx-mrachneyshiy
+  name: nginx-mrachneyshiy
+  namespace: stage
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-mrachneyshiy
+  template:
+    metadata:
+      labels:
+        app: nginx-mrachneyshiy
+    spec:
+      containers:
+        - image: registry.gitlab.com/mrachneyshiy/nginx-mrachneyshiy:__tag__
+          imagePullPolicy: IfNotPresent
+          name: nginx-mrachneyshiy
+      terminationGracePeriodSeconds: 30
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-mrachneyshiy
+  namespace: stage
+spec:
+  ports:
+    - name: web
+      port: 80
+      targetPort: 80
+      nodePort: 30080
+  selector:
+    app: nginx-mrachneyshiy
+  type: NodePort
+
+
