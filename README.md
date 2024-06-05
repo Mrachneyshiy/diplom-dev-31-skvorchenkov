@@ -244,6 +244,8 @@ http://178.154.202.246:30080/
 
 ![](pic/27.png)
 
+![](pic/27.png)
+
 [pipelines](/nginx-mrachneyshiy/.gitlab-ci.yml)
 
 [Вывод pipelines](https://gitlab.com/mrachneyshiy/nginx-mrachneyshiy/-/pipelines)
